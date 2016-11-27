@@ -1,12 +1,21 @@
 """
 test code for html_render.py
 
-includes through step 2
+includes up to step 6
 """
 import io
 
-from html_render import Element, Html, Body, P, TextWrapper
-
+from html_render import (Element,
+                         Html,
+                         Body,
+                         P,
+                         TextWrapper,
+                         Head,
+                         Title,
+                         Hr,
+                         Br,
+                         A,
+                         )
 
 # utility function for testing render methods
 # needs to be used in multiple tests, so write it once here.
@@ -116,6 +125,20 @@ def test_text_wrapper():
     assert file_contents == "A basic piece of text"
 
 
+def test_non_str():
+    """ you should be able to pass anything in, and it will get
+    "stringified"
+    """
+    e = P(34)  # a number
+    e.append((3, 4, 5))  # even a tuple
+
+    file_contents = render_result(e)
+
+    print(file_contents)
+    assert("34") in file_contents
+    assert("(3, 4, 5)") in file_contents
+
+
 def test_sub_element():
     """
     tests that you can add another element and still render properly
@@ -155,6 +178,7 @@ def test_step_2_noindent():
     assert "a small paragraph of text" in file_contents
     assert "<body>" in file_contents
     # you could do more here, but it should all be covered above.
+    # assert False
 
 
 def test_indent():
@@ -199,3 +223,107 @@ def test_multiple_indent():
         assert lines[i].startswith(i * Element.indent + "<")
 
     assert lines[3].startswith(3 * Element.indent + "some")
+
+
+def test_title():
+    """
+    This will implicitly test the OneLineTag element
+    """
+    t = Title("Isn't this a nice title?")
+
+    # making sure indentation still works
+    file_contents = render_result(t, ind="   ")
+
+    print(file_contents)
+    # no "strip()" -- making sure there are no extra newlines
+    assert "\n" not in file_contents
+    assert ">    " not in file_contents
+    assert file_contents.startswith("   <title>")
+    assert file_contents.endswith("</title>")
+    # the only newline should be at the end
+    assert "\n" not in file_contents
+
+
+def test_head():
+    """
+    testing Head with a title in it -- it should never be blank
+    """
+    h = Head()
+    h.append(Title("A nifty title for the page"))
+
+
+def test_full_page_with_title():
+    """
+    not much to actually test here, but good to see it put together.
+
+    everything should have already been tested.
+    """
+    page = Html()
+
+    head = Head()
+    head.append(Title("PythonClass Example"))
+
+    page.append(head)
+
+    body = Body()
+
+    body.append(P("Here is a paragraph of text -- there could be more of them, "
+                  "but this is enough  to show that we can do some text"))
+    body.append(P("And here is another piece of text -- you should be able to add any number"))
+
+    page.append(body)
+
+    file_contents = render_result(page)
+
+    print(file_contents)
+
+    # uncomment this to see results
+    # assert False
+
+
+def test_attributes():
+    """
+    tests that you can pass attributes in to the tag
+    """
+    e = Element("some text", id="this", color="red")  # could be any attributes
+    file_contents = render_result(e)
+    print(file_contents)
+    assert 'id="this"' in file_contents
+    assert 'color="red"' in file_contents
+    # note -- dicts aren't ordered, so you can't enforce order!
+    # assert '<html color="red" id="this">' in file_contents
+
+
+def test_attributes_one_line_tag():
+    """
+    tests that you can pass attributes in to the tag
+    """
+    e = Title("some text", id="this", color="red")  # could be any attributes
+    file_contents = render_result(e)
+    print(file_contents)
+    assert 'id="this"' in file_contents
+    assert 'color="red"' in file_contents
+
+
+def test_br():
+    br = Br("")
+    file_contents = render_result(br)
+    print(file_contents)
+    assert file_contents == "<br />"
+
+
+def test_hr():
+    hr = Hr(width=400)
+    file_contents = render_result(hr)
+    print(file_contents)
+    assert file_contents == '<hr width="400" />'
+
+
+def test_anchor():
+    a = A("http://google.com", "link to google")
+    file_contents = render_result(a)
+    print(file_contents)
+    assert file_contents.startswith('<a ')
+    assert file_contents.endswith('</a>')
+    assert 'href="http://google.com"' in file_contents
+    assert 'link to google' in file_contents
