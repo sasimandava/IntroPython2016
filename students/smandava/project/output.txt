@@ -1,0 +1,2 @@
+Result: Total TIDs, Carrier Server1 Count, Carrier Server2 Count: (972, 853, 853)
+time elapsed in minutes: 37.23911879857381 
